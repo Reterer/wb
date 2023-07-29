@@ -1,0 +1,14 @@
+services:
+    postgres:
+        image: postgres:15.3
+        environment:
+            POSTGRES_USER: "postgres"
+            POSTGRES_PASSWORD: "superpassword"
+        env_file:
+            - user_db.env
+
+        volumes:
+            - ./db/initdb:/docker-entrypoint-initdb.d
+            - ./db/data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
