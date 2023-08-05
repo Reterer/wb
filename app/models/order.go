@@ -2,6 +2,8 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
+	"l0/config"
 
 	_ "github.com/lib/pq"
 )
@@ -69,8 +71,16 @@ type CachedOrderModel struct {
 	cache map[string]Order
 }
 
-func MakeCachedOrderModel() (*CachedOrderModel, error) {
-	connStr := "host=127.0.0.1 user=serviceuser password=servicepassword dbname=servicedb sslmode=disable"
+// Тут, возможно, не очень правильно делаю
+// Но это нужно для удобного тестирования других компонентов
+type OrderModel interface {
+	Insert(Order) error
+	GetByUid(string) (*Order, error)
+	Close()
+}
+
+func MakeCachedOrderModel(cfg config.DBConfig) (OrderModel, error) {
+	connStr := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s password=%s dbname=%s", cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.DBname)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,8 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS orders
 (
     id serial NOT NULL PRIMARY KEY,
-    order_uid text NOT NULL,
+    order_uid text NOT NULL UNIQUE,
+    track_number text NOT NULL,
     entry text NOT NULL,
     locale text NOT NULL,
     internal_signature text NOT NULL,
@@ -10,7 +11,7 @@ CREATE TABLE IF NOT EXISTS orders
     delivery_service text NOT NULL,
     shardkey text NOT NULL,
     sm_id integer NOT NULL,
-    date_created date NOT NULL,
+    date_created text NOT NULL,
     oof_shard text NOT NULL
 );
 
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS deliveries
     zip text NOT NULL,
     city text NOT NULL,
     address text NOT NULL,
+    region text NOT NULL,
     email text NOT NULL,
 
     FOREIGN KEY (order_id) 

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"l0/config"
 	"testing"
 	"time"
 
@@ -57,6 +58,14 @@ var OrderJson1 = []byte(`{
     "date_created": "2021-11-26T06:22:19Z",
     "oof_shard": "1"
 }`)
+
+var dbconf = config.DBConfig{
+	DBname: "servicedb",
+	User:   "serviceuser",
+	Pass:   "servicepassword",
+	Host:   "127.0.0.1",
+	Port:   "5432",
+}
 
 var Order1 = Order{
 	Uid:         "b563feb7b2b84b6test",
@@ -175,8 +184,7 @@ func TestOrderJsonUnMarshal(t *testing.T) {
 	got := Order{}
 	want := Order1
 
-	err := json.Unmarshal(OrderJson1, &got)
-	if err != nil {
+	if err := json.Unmarshal(OrderJson1, &got); err != nil {
 		t.Errorf("Err should be nil, but: %s", err.Error())
 	}
 
@@ -197,7 +205,7 @@ func skipDB(t *testing.T) {
 func TestMakeOrderModel(t *testing.T) {
 	skipDB(t)
 
-	c, err := MakeCachedOrderModel()
+	c, err := MakeCachedOrderModel(dbconf)
 	if err != nil {
 		t.Errorf("Err should be nil, but: %s", err.Error())
 	}
@@ -212,15 +220,14 @@ func setRealyUniqueUid(o Order) Order {
 func TestInsertGetByUid(t *testing.T) {
 	skipDB(t)
 
-	c, err := MakeCachedOrderModel()
+	c, err := MakeCachedOrderModel(dbconf)
 	if err != nil {
 		t.Fatalf("Err should be nil, but: %s", err.Error())
 	}
 	defer c.Close()
 
 	insertedOrder := setRealyUniqueUid(OrderManyItems)
-	err = c.Insert(insertedOrder)
-	if err != nil {
+	if err := c.Insert(insertedOrder); err != nil {
 		t.Errorf("Err should be nil, but: %s", err.Error())
 	}
 
