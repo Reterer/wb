@@ -76,6 +76,7 @@ type CachedOrderModel struct {
 type OrderModel interface {
 	Insert(Order) error
 	GetByUid(string) (*Order, error)
+	ListOfUids() []string
 	Close()
 }
 
@@ -305,6 +306,15 @@ func (c *CachedOrderModel) GetByUid(uid string) (*Order, error) {
 
 	// TODO добавить в кэш
 	return &order, nil
+}
+
+func (c *CachedOrderModel) ListOfUids() []string {
+	orderUids := make([]string, 0, len(c.cache))
+	for k := range c.cache {
+		orderUids = append(orderUids, k)
+	}
+
+	return []string{}
 }
 
 func (c *CachedOrderModel) Close() {

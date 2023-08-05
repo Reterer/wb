@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"l0/config"
 	"l0/models"
@@ -11,7 +12,7 @@ import (
 )
 
 func setRealyUniqueUid(o models.Order) models.Order {
-	o.Uid += time.Now().String()
+	o.Uid += time.Now().Format(time.DateTime)
 	return o
 }
 
@@ -71,6 +72,7 @@ var testmsg = []byte(`{
 }`)
 
 func main() {
+	// TODO push n random orders
 	cfg, err := config.GetConfig()
 	cfg.NATS.ClientID = "test-pulisher"
 	if err != nil {
@@ -78,8 +80,13 @@ func main() {
 	}
 	fmt.Println(cfg)
 
+	var o models.Order
+	_ = json.Unmarshal(testmsg, &o)
+	o = setRealyUniqueUid(o)
+	data, _ := json.Marshal(o)
+
 	sc, _ := stan.Connect(cfg.NATS.ClusterID, cfg.NATS.ClientID)
-	sc.Publish("orders", testmsg) // does not return until an ack has been received from NATS Streaming
+	sc.Publish("orders", data)
 
 	defer sc.Close()
 }

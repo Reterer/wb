@@ -15,9 +15,14 @@ type NATSConfig struct {
 	ClientID  string `env:"NATS_CLIENT_ID" envDefault:"test-client"`
 }
 
+type HTTPConfig struct {
+	Addr string `env:"HTTP_ADDR" envDefault:"127.0.0.1:8080"`
+}
+
 type Config struct {
 	DB   DBConfig
 	NATS NATSConfig
+	HTTP HTTPConfig
 }
 
 func GetConfig() (*Config, error) {

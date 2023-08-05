@@ -26,7 +26,7 @@ RUN go build -o app
 FROM alpine:3.18
 
 COPY --from=build app .
-
+COPY ./static ./static
 CMD ./app
 
 # EXPOSE 8080

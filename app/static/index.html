@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo</title>
+</head>
+
+<body>
+    <div class="main">
+        <div class="main__item list">
+            <button onclick="updateList()">Обновить список uids</button>
+            <pre id="uids-list"></pre>
+        </div>
+        <div class="main__item content">
+            <input id="uid-input">
+            <button onclick="updateContent(document.getElementById('uid-input').value)">Найти</button>
+            <pre id="order-content"></pre>
+        </div>
+    </div>
+
+
+    <script>
+        async function updateList() {
+            try {
+                const response = await fetch(
+                    '/api/v1/orders',
+                    {
+                        method: 'GET',
+                    },
+                );
+                if (!response.ok) {
+                    throw new Error(`Error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                console.log(data);
+                const preElement = document.getElementById('uids-list');
+                preElement.style.fontSize = '18px';
+                preElement.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        async function updateContent(uid) {
+            try {
+                const response = await fetch(
+                    '/api/v1/orders/' + uid,
+                    {
+                        method: 'GET',
+                    },
+                );
+                if (!response.ok) {
+                    throw new Error(`Error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                console.log(data);
+                const preElement = document.getElementById('order-content');
+                preElement.style.fontSize = '14px';
+                preElement.innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        updateList();
+    </script>
+
+    <style>
+        .main {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .main__item {
+            background: rgb(207, 255, 215);
+            padding: 10px;
+            margin-right: 5px;
+            min-height: 90vh;
+        }
+
+        .list {
+            min-width: 20vw;
+        }
+
+        .content {
+            min-width: 60vw;
+        }
+    </style>
+</body>
+
+</html>
