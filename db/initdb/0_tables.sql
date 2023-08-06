@@ -1,8 +1,7 @@
 BEGIN; 
 CREATE TABLE IF NOT EXISTS orders
 (
-    id serial NOT NULL PRIMARY KEY,
-    order_uid text NOT NULL UNIQUE,
+    order_uid text NOT NULL PRIMARY KEY,
     track_number text NOT NULL,
     entry text NOT NULL,
     locale text NOT NULL,
@@ -18,7 +17,7 @@ CREATE TABLE IF NOT EXISTS orders
 CREATE TABLE IF NOT EXISTS deliveries
 (
     id serial NOT NULL PRIMARY KEY,
-    order_id serial NOT NULL,
+    order_uid text NOT NULL UNIQUE,
     name text NOT NULL,
     phone text NOT NULL,
     zip text NOT NULL,
@@ -27,14 +26,14 @@ CREATE TABLE IF NOT EXISTS deliveries
     region text NOT NULL,
     email text NOT NULL,
 
-    FOREIGN KEY (order_id) 
-        REFERENCES orders (id)
+    FOREIGN KEY (order_uid) 
+        REFERENCES orders (order_uid)
 );
 
 CREATE TABLE IF NOT EXISTS items
 (
     id serial NOT NULL PRIMARY KEY,
-    order_id serial NOT NULL,
+    order_uid text NOT NULL,
     chrt_id integer NOT NULL,
     track_number text NOT NULL,
     price integer NOT NULL,
@@ -47,14 +46,14 @@ CREATE TABLE IF NOT EXISTS items
     brand text NOT NULL,
     status integer NOT NULL,
 
-    FOREIGN KEY (order_id) 
-        REFERENCES orders (id)
+    FOREIGN KEY (order_uid) 
+        REFERENCES orders (order_uid)
 );
 
 CREATE TABLE IF NOT EXISTS payments
 (
     id serial NOT NULL PRIMARY KEY,
-    order_id serial NOT NULL,
+    order_uid text NOT NULL UNIQUE,
     transaction text NOT NULL,
     request_id text NOT NULL,
     currency text NOT NULL,
@@ -66,8 +65,8 @@ CREATE TABLE IF NOT EXISTS payments
     goods_total integer NOT NULL,
     custom_fee integer NOT NULL,
 
-    FOREIGN KEY (order_id) 
-        REFERENCES orders (id)
+    FOREIGN KEY (order_uid) 
+        REFERENCES orders (order_uid)
 );
 
 END;

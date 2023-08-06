@@ -19,5 +19,12 @@ services:
         ports:
             - "4222:4222"
             - "8223:8223"
-    # service:
-    #     build: ./app
+
+    service:
+        build: ./app
+        restart: always
+        ports:
+            - "8080:8080"
+        env_file:
+            - user_db.env
+            - service.env

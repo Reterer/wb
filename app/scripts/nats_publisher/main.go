@@ -3,16 +3,33 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"l0/config"
-	"l0/models"
+	"math/rand"
 	"os"
+	"strconv"
 	"time"
+
+	"github.com/Reterer/wb/app/config"
+	"github.com/Reterer/wb/app/models"
 
 	"github.com/nats-io/stan.go"
 )
 
-func setRealyUniqueUid(o models.Order) models.Order {
-	o.Uid = time.Now().Format(time.DateTime)
+func setRealyUnique(o models.Order) models.Order {
+	r := strconv.Itoa(int(time.Now().UnixMicro()))
+	o.Uid += r
+	o.Delivery.Name += r
+	o.Payment.Transaction = o.Uid
+
+	itemsCount := rand.Intn(5)
+	item := o.Items[0]
+	newItems := make([]models.Item, itemsCount)
+	for i := 0; i < itemsCount; i++ {
+		newItems[i] = item
+		newItems[i].ChrtId = itemsCount
+		newItems[i].TrackNumber = r
+	}
+	o.Items = newItems
+
 	return o
 }
 
@@ -22,7 +39,7 @@ func fatalError(err error) {
 }
 
 var testmsg = []byte(`{
-    "order_uid": "b563feb7b2b84b6test",
+    "order_uid": "test",
     "track_number": "WBILMTESTTRACK",
     "entry": "WBIL",
     "delivery": {
@@ -71,6 +88,31 @@ var testmsg = []byte(`{
     "oof_shard": "1"
 }`)
 
+func breakData(data []byte) []byte {
+	return data[:rand.Intn(len(data))]
+}
+
+func breakOrder(data []byte) []byte {
+	r := rand.Intn(4)
+	p := make(map[string]interface{})
+	json.Unmarshal(data, &p)
+	if r == 0 {
+		// Удалим delivery
+		delete(p, "delivery")
+	} else if r == 1 {
+		// Удалим delivery
+		delete(p, "payment")
+	} else if r == 2 {
+		// Удалим items
+		delete(p, "items")
+	} else if r == 3 {
+		// Удалим, например, order_uid
+		delete(p, "order_uid")
+	}
+	data, _ = json.Marshal(p)
+	return data
+}
+
 func main() {
 	// TODO push n random orders
 	cfg, err := config.GetConfig()
@@ -78,15 +120,32 @@ func main() {
 	if err != nil {
 		fatalError(err)
 	}
-	fmt.Println(cfg)
+	sc, err := stan.Connect(cfg.NATS.ClusterID, cfg.NATS.ClientID)
+	if err != nil {
+		fatalError(err)
+	}
 
-	var o models.Order
-	_ = json.Unmarshal(testmsg, &o)
-	o = setRealyUniqueUid(o)
-	data, _ := json.Marshal(o)
+	n := 30  // Количество новых записей
+	p := 0.0 // Вероятность сломаной версии (неполные данные) Нет проверок
+	q := 0.1 // Вероятность сломать json (мусор)
+	var defo models.Order
+	_ = json.Unmarshal(testmsg, &defo)
 
-	sc, _ := stan.Connect(cfg.NATS.ClusterID, cfg.NATS.ClientID)
-	sc.Publish("orders", data)
+	for i := 0; i < n; i++ {
+		var data []byte
+		o := setRealyUnique(defo)
+		r := rand.Float64()
+		data, _ = json.Marshal(o)
+
+		if r < p {
+			data = breakOrder(data)
+		} else if r < p+q {
+			data = breakData(data)
+		} else {
+		}
+		sc.Publish("orders", data)
+
+	}
 
 	defer sc.Close()
 }

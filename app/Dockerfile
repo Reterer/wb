@@ -18,7 +18,7 @@ RUN go mod download
 COPY *.go ./
 
 # compile application
-RUN go build -o app
+RUN go build -o app main.go
 
 ##
 ## STEP 2 - DEPLOY
@@ -29,4 +29,4 @@ COPY --from=build app .
 COPY ./static ./static
 CMD ./app
 
-# EXPOSE 8080
+EXPOSE 8080
