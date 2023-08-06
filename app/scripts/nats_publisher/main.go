@@ -12,7 +12,7 @@ import (
 )
 
 func setRealyUniqueUid(o models.Order) models.Order {
-	o.Uid += time.Now().Format(time.DateTime)
+	o.Uid = time.Now().Format(time.DateTime)
 	return o
 }
 

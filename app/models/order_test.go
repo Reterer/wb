@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"l0/config"
+	"strconv"
 	"testing"
 	"time"
 
@@ -213,7 +214,7 @@ func TestMakeOrderModel(t *testing.T) {
 }
 
 func setRealyUniqueUid(o Order) Order {
-	o.Uid += time.Now().String()
+	o.Uid += strconv.Itoa(int(time.Now().Unix()))
 	return o
 }
 
@@ -239,7 +240,6 @@ func TestInsertGetByUid(t *testing.T) {
 	// изначально у нас не назначен dbid
 	// но GetByUid устанавливает
 	// поэтому их нужно сбить для проверки на равенство
-	selectedOrder.dbId = 0
 	selectedOrder.Payment.dbId = 0
 	selectedOrder.Delivery.dbId = 0
 	for i := 0; i < len(selectedOrder.Items); i++ {

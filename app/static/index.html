@@ -10,8 +10,8 @@
 <body>
     <div class="main">
         <div class="main__item list">
-            <button onclick="updateList()">Обновить список uids</button>
-            <pre id="uids-list"></pre>
+            <button onclick="updateList()">Обновить список uids в кэше</button>
+            <div id="uids-list"></div>
         </div>
         <div class="main__item content">
             <input id="uid-input">
@@ -36,9 +36,14 @@
                 const data = await response.json();
 
                 console.log(data);
-                const preElement = document.getElementById('uids-list');
-                preElement.style.fontSize = '18px';
-                preElement.innerHTML = JSON.stringify(data, null, 2);
+                const d = document.getElementById('uids-list');
+                d.innerHTML = '';
+                for (const orderUid of data) {
+                    var btn = document.createElement("button");
+                    btn.onclick = function () { updateContent(orderUid); };
+                    btn.innerHTML = orderUid
+                    d.appendChild(btn);
+                }
             } catch (error) {
                 console.log(error);
             }
@@ -85,11 +90,11 @@
         }
 
         .list {
-            min-width: 20vw;
+            width: 20vw;
         }
 
         .content {
-            min-width: 60vw;
+            width: 60vw;
         }
     </style>
 </body>
