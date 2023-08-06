@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"l0/api"
+	"l0/config"
+	"l0/models"
+	"l0/nats"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-
-	"github.com/Reterer/wb/app/api"
-	"github.com/Reterer/wb/app/config"
-	"github.com/Reterer/wb/app/models"
-	"github.com/Reterer/wb/app/nats"
 
 	"github.com/nats-io/stan.go"
 )
@@ -40,7 +39,7 @@ func main() {
 
 	// nats
 	fmt.Println("init nats subsribe")
-	sc, err := stan.Connect(cfg.NATS.ClusterID, cfg.NATS.ClientID)
+	sc, err := stan.Connect(cfg.NATS.ClusterID, cfg.NATS.ClientID, stan.NatsURL(cfg.NATS.URL))
 	if err != nil {
 		fatalError(err)
 	}

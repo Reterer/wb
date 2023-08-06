@@ -4,8 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-
-	"github.com/Reterer/wb/app/config"
+	"l0/config"
 
 	_ "github.com/lib/pq"
 )

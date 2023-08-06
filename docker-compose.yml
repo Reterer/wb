@@ -4,14 +4,17 @@ services:
         environment:
             POSTGRES_USER: "postgres"
             POSTGRES_PASSWORD: "superpassword"
+            PG_HBA: "host    all             all             10.5.0.0/16             trust"
         env_file:
             - user_db.env
-
         volumes:
             - ./db/initdb:/docker-entrypoint-initdb.d
             - ./db/data:/var/lib/postgresql/data
         ports:
             - "5432:5432"
+        networks:
+            network:
+                ipv4_address: 10.5.0.2
 
     nats-streaming:
         image: nats-streaming:0.25
@@ -19,6 +22,9 @@ services:
         ports:
             - "4222:4222"
             - "8223:8223"
+        networks:
+            network:
+                ipv4_address: 10.5.0.3
 
     service:
         build: ./app
@@ -28,3 +34,17 @@ services:
         env_file:
             - user_db.env
             - service.env
+        depends_on:
+            - "postgres"
+            - "nats-streaming"
+        networks:
+            network:
+                ipv4_address: 10.5.0.4
+
+networks:
+    network:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 10.5.0.0/16
+                  gateway: 10.5.0.1
