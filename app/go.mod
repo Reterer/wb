@@ -1,4 +1,4 @@
-module github.com/Reterer/wb/app
+module l0
 
 go 1.20
 

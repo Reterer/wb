@@ -2,11 +2,10 @@ package models
 
 import (
 	"encoding/json"
+	"l0/config"
 	"strconv"
 	"testing"
 	"time"
-
-	"github.com/Reterer/wb/app/config"
 
 	"github.com/go-test/deep"
 )

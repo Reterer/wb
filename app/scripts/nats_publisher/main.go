@@ -3,13 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"l0/config"
+	"l0/models"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/Reterer/wb/app/config"
-	"github.com/Reterer/wb/app/models"
 
 	"github.com/nats-io/stan.go"
 )
@@ -25,7 +24,7 @@ func setRealyUnique(o models.Order) models.Order {
 	newItems := make([]models.Item, itemsCount)
 	for i := 0; i < itemsCount; i++ {
 		newItems[i] = item
-		newItems[i].ChrtId = itemsCount
+		newItems[i].ChrtId = i
 		newItems[i].TrackNumber = r
 	}
 	o.Items = newItems

@@ -3,8 +3,7 @@ package nats
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/Reterer/wb/app/models"
+	"l0/models"
 
 	"github.com/nats-io/stan.go"
 )
