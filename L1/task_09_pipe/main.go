@@ -38,12 +38,13 @@ func main() {
 	arr := []int{0, 1, 2, 4, 6, 8}
 
 	ch := make(chan int) // канал для записи чисел
+
 	// создаем конвейер чисел
 	out := doubleWorker(ch)
 	printer(out)
 
 	// Пишем числа в канал
-	for x := range arr {
+	for _, x := range arr {
 		ch <- x
 	}
 	close(ch) // Закрываем канал, что бы другие горутины завершили работу
