@@ -1,5 +1,7 @@
 package main
 
+import "os"
+
 /*
 === Утилита sort ===
 
@@ -25,6 +27,26 @@ package main
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-func main() {
+/*
 
+ */
+
+type Config struct {
+	columnMode   bool // Отсортировать по строке, либо по колонке -k
+	sortedColumn int  // Номер колонки, по которой нужно сортировать -k
+
+	numSort          bool // Числовая сортировка -n
+	reversed         bool // Сортировка в обратном порядке -r
+	unique           bool // Не выводить повторяющиеся строки -u
+	monthSort        bool // Сортировать по месяцам -M
+	rStrip           bool // Игнорировать хвостовые пробелы -b
+	checkSorted      bool // Проверить, отсортированны ли данные
+	humanNumericSort bool // Сортировать с учетом суффиксов h
+
+	inPath  string // Входной файл IN
+	outPath string // Выходной файл OUT
+}
+
+func main() {
+	os.Stderr
 }
