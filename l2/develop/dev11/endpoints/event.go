@@ -29,7 +29,7 @@ func (e *EventHTTP) jsonResponse(w http.ResponseWriter, r interface{}, statusCod
 func (e *EventHTTP) jsonResponseBytes(w http.ResponseWriter, b []byte, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(b)
+	_, _ = w.Write(b)
 }
 
 // Структура для json сообщения об ошибки
