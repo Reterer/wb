@@ -85,10 +85,39 @@ type Grep struct {
 	files   []string
 }
 
-func (g *Grep) formatLine(nfilenamesep, line string, sep byte, num int) []byte {
-	var buf bytes.Buffer
+type grepPrinter struct {
+	w             io.Writer
+	matchPrefix   string
+	contextPrefix string
+	matchSep      byte
+	contextSep    byte
 
-	if g.opts.lineNum {
+	needNumerateLines bool
+	wasPritned        bool // Первая строка никогда не начинается с \n
+	// Правильней было бы сделать циклический буффер для любого типа
+}
+
+func newGrepPrinter(w io.Writer, filename string, msep byte, csep byte, needNum bool) grepPrinter {
+	res := grepPrinter{
+		w:                 w,
+		matchSep:          msep,
+		contextSep:        csep,
+		needNumerateLines: needNum,
+		matchPrefix:       "\n",
+		contextPrefix:     "\n",
+	}
+
+	if filename != "" {
+		res.matchPrefix = "\n" + filename + string(msep)
+		res.contextPrefix = "\n" + filename + string(csep)
+	}
+
+	return res
+}
+
+func (p *grepPrinter) formatLine(nfilenamesep, line string, sep byte, num int) []byte {
+	var buf bytes.Buffer
+	if p.needNumerateLines {
 		snum := strconv.Itoa(num)
 		buf.Grow(len(nfilenamesep) + len(snum) + len(line) + 1)
 		buf.WriteString(nfilenamesep)
@@ -100,8 +129,38 @@ func (g *Grep) formatLine(nfilenamesep, line string, sep byte, num int) []byte {
 		buf.WriteString(nfilenamesep)
 		buf.WriteString(line)
 	}
-
 	return buf.Bytes()
+}
+
+func (p *grepPrinter) formatMatched(line string, num int) []byte {
+	return p.formatLine(p.matchPrefix, line, p.matchSep, num)
+}
+
+func (p *grepPrinter) formatContext(line string, num int) []byte {
+	return p.formatLine(p.contextPrefix, line, p.contextSep, num)
+}
+
+func (p *grepPrinter) print(line []byte) error {
+	if !p.wasPritned {
+		if len(line) > 0 {
+			line = line[1:]
+		}
+		p.wasPritned = true
+	}
+
+	if _, err := p.w.Write(line); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *grepPrinter) printMatched(line string, num int) error {
+	b := p.formatMatched(line, num)
+	return p.print(b)
+}
+func (p *grepPrinter) printContext(line string, num int) error {
+	b := p.formatContext(line, num)
+	return p.print(b)
 }
 
 func (g *Grep) grepio(filename string, reader io.Reader, writer io.Writer) error {
@@ -119,16 +178,9 @@ func (g *Grep) grepio(filename string, reader io.Reader, writer io.Writer) error
 	if err != nil {
 		return err
 	}
-	// ---
-	var matchPrefix string
-	var matchSep byte = ':'
-	var contextPrefix string
-	var contextSep byte = '-'
 
-	if filename != "" {
-		matchPrefix = filename + string(matchSep)
-		contextPrefix = filename + string(contextSep)
-	}
+	// ---
+	printer := newGrepPrinter(writer, filename, ':', '-', g.opts.lineNum)
 
 	count := 0      // количество найденных строк (для -c)
 	lineNumber := 0 // количество строк (для -n)
@@ -153,48 +205,39 @@ func (g *Grep) grepio(filename string, reader io.Reader, writer io.Writer) error
 					// Вывод строк before, если нужно: -B
 					line, ok := beforeBuf.Pop()
 					for ok {
-						if _, err := writer.Write(line); err != nil {
+						if err := printer.print(line); err != nil {
 							return err
 						}
 						line, ok = beforeBuf.Pop()
-						if len(matchPrefix) == 0 || matchPrefix[0] != '\n' {
-							matchPrefix = "\n" + matchPrefix
-							contextPrefix = "\n" + contextPrefix
-						}
 					}
 				}
 
-				outbuf := g.formatLine(matchPrefix, line, ':', lineNumber)
-				if _, err := writer.Write(outbuf); err != nil {
+				if err := printer.printMatched(line, lineNumber); err != nil {
 					return err
 				}
-				if g.opts.before == 0 && count == 0 {
-					matchPrefix = "\n" + matchPrefix
-					contextPrefix = "\n" + contextPrefix
-				}
-
 				endAfter = lineNumber + g.opts.after // -A
 			}
 			count++
 		} else {
 			if !g.opts.count {
 				if lineNumber <= endAfter {
-					outbuf := g.formatLine(contextPrefix, line, '-', lineNumber)
-					if _, err := writer.Write(outbuf); err != nil {
+					if err := printer.printContext(line, lineNumber); err != nil {
 						return err
 					}
 				} else {
-					// Если мы не вывели эту строку, то ее нужно добавить в буффер
-					// -B
-					outbuf := g.formatLine(contextPrefix, line, '-', lineNumber)
-					beforeBuf.Push(outbuf)
+					// Если мы не вывели эту строку, то ее нужно добавить в буффер, если он нужен
+					if g.opts.before > 0 {
+						// -B
+						outbuf := printer.formatContext(line, lineNumber)
+						beforeBuf.Push(outbuf)
+					}
 				}
 			}
 		}
 	}
 
 	if g.opts.count { // -c
-		if _, err := writer.Write([]byte(matchPrefix + strconv.Itoa(count))); err != nil {
+		if _, err := writer.Write([]byte(printer.matchPrefix[1:] + strconv.Itoa(count))); err != nil {
 			return err
 		}
 	}
@@ -203,8 +246,15 @@ func (g *Grep) grepio(filename string, reader io.Reader, writer io.Writer) error
 }
 
 func NewGrep(cfg *config) (*Grep, error) {
-	files := make([]string, 0, len(cfg.files))
+	files := make([]string, len(cfg.files))
 	copy(files, cfg.files)
+
+	after := cfg.after
+	before := cfg.before
+	if cfg.context != 0 {
+		after = cfg.context
+		before = cfg.context
+	}
 
 	return &Grep{
 		opts: grepOpts{
@@ -213,6 +263,8 @@ func NewGrep(cfg *config) (*Grep, error) {
 			invert:     cfg.invert,
 			fixed:      cfg.fixed,
 			lineNum:    cfg.lineNum,
+			after:      after,
+			before:     before,
 		},
 		pattern: cfg.pattern,
 		files:   files,
@@ -223,7 +275,6 @@ func (g *Grep) Start() {
 	if len(g.files) == 0 {
 		g.files = append(g.files, "-")
 	}
-
 	for _, file := range g.files {
 		if file == "-" {
 			err := g.grepio("", os.Stdin, os.Stdout)
@@ -236,7 +287,7 @@ func (g *Grep) Start() {
 				fmt.Fprintf(os.Stderr, "grep: %s: %s\n", file, err)
 				continue
 			}
-			err = g.grepio("", os.Stdin, os.Stdout)
+			err = g.grepio(file, f, os.Stdout)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "grep: %s: %s\n", file, err)
 			}

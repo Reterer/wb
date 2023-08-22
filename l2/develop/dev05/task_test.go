@@ -285,6 +285,7 @@ func TestGrepio(t *testing.T) {
 			filename: "test",
 			input: []string{
 				"",                // |
+				"",                // |
 				"something hello", // 1
 				"hello",           // |
 				"something hello", // 2
@@ -298,7 +299,39 @@ func TestGrepio(t *testing.T) {
 			},
 			want: []string{
 				"test-",                // |
+				"test-",                // |
 				"test:something hello", // 1
+				"test-hello",           // |
+				"test:something hello", // 2
+				"test-abc",             // |
+				"test-abc2",            // |
+				"test:something hello", // 3
+			},
+		},
+		{ // find with filename
+			testName: "BEFORE starts with match",
+			grep: Grep{
+				pattern: "something hello",
+				opts: grepOpts{
+					before: 2,
+				}},
+			filename: "test",
+			input: []string{
+				"something hello", // 1
+				"",                // |
+				"hello",           // |
+				"something hello", // 2
+				"123",
+				"heh",
+				"string",
+				"abc",             // |
+				"abc2",            // |
+				"something hello", // 3
+				"abc3",
+			},
+			want: []string{
+				"test:something hello", // 1
+				"test-",                // |
 				"test-hello",           // |
 				"test:something hello", // 2
 				"test-abc",             // |
