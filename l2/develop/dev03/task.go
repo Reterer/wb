@@ -47,10 +47,6 @@ type Config struct {
 	OutPath string // Выходной файл OUT
 }
 
-// TODO обновить usage
-// TODO написать тесты, если будут силы
-// TODO юнит тесты
-
 func parseArgs() *Config {
 	var cfg Config
 	flag.Usage = func() {
