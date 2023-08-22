@@ -57,9 +57,7 @@ func parseArgs() *Config {
 		fmt.Fprint(os.Stderr, `NAME:
 	sort - сортирует строки в текстовых файлах	
 SYNOPSIS:
-	sort [OPTION]... [IN] [OUT]
-	sort -b -n IN [OUT]
-	sort -M -k 3
+	sort [OPTION...] [IN] [OUT]
 
 DESCRIPTION:
 	Сортирует строки из файла IN и сохраняет в OUT
@@ -77,9 +75,6 @@ DESCRIPTION:
 	-c 
 		Провкра на отсортированность (не сортирует)
 	
-	-h 
-		Сортировать человечески-читаемые числа (например 2K 1G)
-	
 	-k k=COL
 		Сортировать по колонке COL
 		
@@ -88,6 +83,8 @@ DESCRIPTION:
 		с конца и в начале
 
 		Если в строке количетсво колонок меньше нужного, то ключ будет равен "", а утилита выдаст предупреждение в stderr
+
+		Колонки нумеруются с 1, слева направо.
 	
 	-M
 		Сравнение по месяцам (unknown) < 'JAN' < ... < 'DEC'
@@ -106,7 +103,7 @@ DESCRIPTION:
 		Выводит только уникальные строки
 
 	Следующие опции являются взаимоисключающими:
-		-n, -M, -h
+		-n, -M
 	Утилита сразу же завершится, если одновременно задано несколько типов сортировки.
 
 	Утилита использует внутренюю сортировку, поэтому лучше не стоит сортировать большие файлы (Вес которых эквивалентен с объемом RAM).
@@ -205,7 +202,7 @@ var MONTHS = map[string]int{
 	"SEP": 9,
 	"OCT": 10,
 	"NOV": 11,
-	"DEV": 12,
+	"DEC": 12,
 }
 
 type lessFunc func(i, j int) bool
@@ -238,9 +235,9 @@ func makeSBL(cfg *Config) *sortByLess {
 			return strings.TrimSpace(sbl.lines[i])
 		}
 	}
-	if cfg.SortedColumn != 0 { //-k
+	if cfg.SortedColumn > 0 { //-k
 		prevKey := sbl.key
-		col := cfg.SortedColumn
+		col := cfg.SortedColumn - 1
 		sbl.key = func(i int) string {
 			k := prevKey(i)
 			splited := strings.Split(k, " ")
@@ -283,9 +280,6 @@ func makeSBL(cfg *Config) *sortByLess {
 			return sbl.key(i) < sbl.key(j)
 		}
 	}
-	// -h
-	// -M
-	// -n
 	return &sbl
 }
 
