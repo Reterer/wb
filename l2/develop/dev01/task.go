@@ -20,8 +20,6 @@ import (
 Программа должна проходить проверки go vet и golint.
 */
 
-// TODO тесты
-// TODO получше понять и сделать
 func main() {
 	ntpServer := "0.europe.pool.ntp.org"
 	res, err := ntp.Query(ntpServer)
