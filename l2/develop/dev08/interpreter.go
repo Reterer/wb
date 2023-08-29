@@ -217,23 +217,26 @@ func (itrpr *Interpreter) do(e Entity) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("forked: %-10s pid: %6d\n", cmd[0], pid)
+		fmt.Fprintf(os.Stderr, "forked: %-10s pid: %6d\n", cmd[0], pid)
 
-		in.Close() // Закрываем pipe, через который мы связывали два процесса
+		if in != os.Stdin {
+			in.Close() // Закрываем pipe, через который мы связывали два процесса
+		}
 		in = out
 	}
 
 	// Выполняем последнюю команду особенно
+	lastArgs := e.Cmds[len(e.Cmds)-1]
 	if e.Bg {
 		// Нужно сделать fork и выполнить ее там
-		pid, err := itrpr.eforkout(in, os.Stdout, e.Cmds[0])
+		pid, err := itrpr.eforkout(in, os.Stdout, lastArgs)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("forked: %-10s pid: %6d\n", e.Cmds[0][0], pid)
+		fmt.Fprintf(os.Stderr, "forked: %-10s pid: %6d\n", lastArgs[0], pid)
 		return nil
 	} else {
-		return itrpr.ewait(in, e.Cmds[0])
+		return itrpr.ewait(in, lastArgs)
 	}
 }
 
